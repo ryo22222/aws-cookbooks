@@ -1,0 +1,28 @@
+upstream <%= @name %>.play {
+  server 127.0.0.1:9000;
+}
+
+server {
+  listen 80 default_server;
+  server_name _;
+
+  access_log /var/log/nginx/<%= @name %>.access.log;
+  error_log /var/log/nginx/<%= @name %>.error.log;
+
+  root <%= @document_root %>/current/public;
+  index index.html;
+
+  location / {
+    try_files $uri $uri.html $uri/index.html @play;
+  }
+
+  location @play {
+    proxy_read_timeout 180;
+    proxy_connect_timeout 180;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header Client-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_pass http://<%= @name %>.play;
+  }
+}
